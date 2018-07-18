@@ -122,6 +122,33 @@ class TestSearch(BaseRestFrameworkTestCase):
             self.special_count
         )
 
+    def _multi_search(self, search_term, url=None):
+        """
+        search across all fields for a phrase
+        """
+
+        self.authenticate()
+
+        if url is None:
+            url = reverse('bookdocument-list', kwargs={})
+        data = {}
+
+        # Should contain 20 results
+        response = self.client.get(url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), self.all_count)
+
+        # Should contain only 10 results
+        filtered_response = self.client.get(
+            url + '?search={}'.format(search_term),
+            data
+        )
+        self.assertEqual(filtered_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            len(filtered_response.data['results']),
+            self.special_count
+        )
+
     def _search_boost(self, search_term, ordering, url=None):
         """Search boost.
 
@@ -235,6 +262,13 @@ class TestSearch(BaseRestFrameworkTestCase):
         """Search by field."""
         return self._search_by_field(
             'summary',
+            'photography',
+            url=url
+        )
+
+    def test_multi_search(self, url=None):
+        """Search by field."""
+        return self._multi_search(
             'photography',
             url=url
         )
